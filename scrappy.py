@@ -6,7 +6,7 @@ BASE_URL = 'https://rozetka.com.ua/notebooks/c80004/filter/'
 
 
 def get_html(url=BASE_URL):
-    req = requests.get(url, timeout=5)
+    req = requests.get(url, timeout=10)
     return req.text
 
 
@@ -20,32 +20,34 @@ def get_soup(html, parser='html.parser', tags_to_delete=None):
     return soup
 
 
+def repeat_until_done(func):
+    def wrapped(*args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except AttributeError:
+                print('Error. Trying to do it again.')
+    return wrapped
+
+
+@repeat_until_done
 def get_count_pages(url=BASE_URL):
-    while True:
-        try:
-            soup = get_soup(get_html(url), tags_to_delete=('script',))
-            pages_anc = soup.find('nav', class_='paginator-catalog pos-fix').find_all('a', class_='blacklink paginator-catalog-l-link')[-1].get('href')
-            break
-        except AttributeError:
-            print('Error. Trying to connect again.')
+    soup = get_soup(get_html(url), tags_to_delete=('script',))
+    pages_anc = soup.find('nav', class_='paginator-catalog pos-fix').find_all('a', class_='blacklink paginator-catalog-l-link')[-1].get('href')
     total = pages_anc.split('/')[-2].split('=')[1] or re.search(r'1\d{2}', pages_anc)[0]
     return int(total)
 
 
+@repeat_until_done
 def get_page_data(url):
-    while True:
-        try:
-            dct_data = {}
-            soup = get_soup(get_html(url), tags_to_delete=('script',))
-            product_catalog = soup.find('div', class_='g-i-tile-l g-i-tile-catalog-hover-left-side clearfix').find_all(
-                'div', class_='g-i-tile g-i-tile-catalog')
-            for item, product in enumerate(product_catalog, 1):
-                dct_data.setdefault(item, {})['title'] = product.find('div', class_='g-i-tile-i-title clearfix').find(
-                    'a').next.strip()
-                dct_data.setdefault(item, {})['url'] = product.find('a').get('href')
-            break
-        except AttributeError:
-            print('Error. Trying to connect again.')
+    dct_data = {}
+    soup = get_soup(get_html(url), tags_to_delete=('script',))
+    product_catalog = soup.find('div', class_='g-i-tile-l g-i-tile-catalog-hover-left-side clearfix').find_all(
+        'div', class_='g-i-tile g-i-tile-catalog')
+    for item, product in enumerate(product_catalog, 1):
+        dct_data.setdefault(item, {})['title'] = product.find('div', class_='g-i-tile-i-title clearfix').find(
+            'a').next.strip()
+        dct_data.setdefault(item, {})['url'] = product.find('a').get('href')
     return dct_data
 
 
