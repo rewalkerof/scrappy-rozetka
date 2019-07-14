@@ -1,5 +1,6 @@
-import requests
 import re
+
+import requests
 from bs4 import BeautifulSoup
 
 
@@ -30,6 +31,7 @@ class ScrapperMixin:
                     return func(*args, **kwargs)
                 except AttributeError:
                     print('Error. Trying to do it again.')
+
         return wrapped
 
 
@@ -39,7 +41,9 @@ class RozetkaScrapper:
     @ScrapperMixin.repeat_until_done
     def get_count_pages(self, url):
         soup = ScrapperMixin.get_soup(ScrapperMixin.get_html(url), tags_to_delete=('script',))
-        pages_anc = soup.find('nav', class_='paginator-catalog pos-fix').find_all('a', class_='blacklink paginator-catalog-l-link')[-1].get('href')
+        pages_anc = \
+        soup.find('nav', class_='paginator-catalog pos-fix').find_all('a', class_='blacklink paginator-catalog-l-link')[
+            -1].get('href')
         total = pages_anc.split('/')[-2].split('=')[1] or re.search(r'1\d{2}', pages_anc)[0]
         return int(total)
 
@@ -70,4 +74,3 @@ class RozetkaScrapper:
 
 if __name__ == '__main__':
     RozetkaScrapper()
-
