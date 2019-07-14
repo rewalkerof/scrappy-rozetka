@@ -1,2 +1,2 @@
 # scrappy-rozetka
-Спасибо за то, что ты создал этот репозиторий.
+Parsing site laptop category 
